@@ -107,7 +107,7 @@ module.exports = function createShopifyAuthRoutes({
       // console.log(accessToken);
       // console.log('shop info' + JSON.stringify(shopInfo));
 
-      fetch('https://angelus1.serveo.net/shop', { 
+      fetch('https://app.wait.li/shop', { 
         method: 'POST',
         mode: 'no-cors',
         body: JSON.stringify(shopInfo),
