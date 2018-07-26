@@ -1,6 +1,7 @@
 const querystring = require('querystring');
 const crypto = require('crypto');
 const fetch = require('node-fetch');
+const http = require('http');
 
 module.exports = function createShopifyAuthRoutes({
   host,
@@ -49,7 +50,8 @@ module.exports = function createShopifyAuthRoutes({
     // Users are redirected here after clicking `Install`.
     // The redirect from Shopify contains the authorization_code query parameter,
     // which the app exchanges for an access token
-    async callback(request, response, next) {
+    async callback(request, response) {
+
       const { query } = request;
       const { code, hmac, shop } = query;
 
@@ -87,23 +89,61 @@ module.exports = function createShopifyAuthRoutes({
       });
 
       const responseBody = await remoteResponse.json();
+
+      console.log("Response Body: " + responseBody);
+      console.log(responseBody);
+
       const accessToken = responseBody.access_token;
 
-      try {
-        const {token} = await shopStore.storeShop({ accessToken, shop })
+      const shopInfo = {
+        code: query.code,
+        hmac: query.hmac,
+        shop: query.shop,
+        timestamp: query.timestamp,
+        accessToken: accessToken
+      };
 
-        if (request.session) {
-          request.session.accessToken = accessToken;
-          request.session.shop = shop;
-        } else {
-          console.warn('Session not present on request, please install a session middleware.');
+      // console.log(query);
+      // console.log(accessToken);
+      // console.log('shop info' + JSON.stringify(shopInfo));
+
+      fetch('https://angelus1.serveo.net/shop', { 
+        method: 'POST',
+        mode: 'no-cors',
+        body: JSON.stringify(shopInfo),
+        headers: {"Content-Type": "application/json"}
+      })
+      .then(res => {
+        console.log(res.status);
+        // return res.json();
+        if (res.status == 400) {
+          console.log('Shop is already in the database');
+          storeShopFun('already-complete');
+        } else if (res.status == 200) {
+          console.log('Shop was just installed');
+          storeShopFun('not-complete');
         }
+      });
 
-        afterAuth(request, response);
-      } catch (error) {
-        console.error('🔴 Error storing shop access token', error);
-        next(error);
+      function storeShopFun(status) {
+        console.log(status);
+        shopStore.storeShop({ accessToken, shop, status }, (err, token) => {
+          if (err) {
+            console.error('🔴 Error storing shop access token', err);
+          }
+  
+          if (request.session) {
+            request.session.accessToken = accessToken;
+            request.session.shop = shop;
+            request.session.status = status;
+            console.log(accessToken + ' ' + shop + ' ' + status);
+          } else {
+            console.warn('Session not present on request, please install a session middleware.');
+          }
+          afterAuth(request, response);
+        });
       }
+      
     }
   };
 };
