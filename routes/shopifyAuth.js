@@ -1,7 +1,6 @@
 const querystring = require('querystring');
 const crypto = require('crypto');
 const fetch = require('node-fetch');
-const http = require('http');
 
 module.exports = function createShopifyAuthRoutes({
   host,
@@ -23,7 +22,8 @@ module.exports = function createShopifyAuthRoutes({
       }
 
       const redirectTo = `https://${shop}/admin/oauth/authorize`;
-
+      if (Array.isArray(scope)) scope = scope.join(',');
+      if (typeof scope === 'string') scope = scope.replace(/ /g, '');
       const redirectParams = {
         baseUrl,
         scope,
@@ -40,7 +40,9 @@ module.exports = function createShopifyAuthRoutes({
         <html>
           <head>
             <script type="text/javascript">
-              window.top.location.href = "${redirectTo}?${querystring.stringify(redirectParams)}"
+              window.top.location.href = "${redirectTo}?${querystring.stringify(
+          redirectParams,
+        )}"
             </script>
           </head>
         </html>`,
@@ -50,8 +52,7 @@ module.exports = function createShopifyAuthRoutes({
     // Users are redirected here after clicking `Install`.
     // The redirect from Shopify contains the authorization_code query parameter,
     // which the app exchanges for an access token
-    async callback(request, response) {
-
+    async callback(request, response, next) {
       const { query } = request;
       const { code, hmac, shop } = query;
 
@@ -79,71 +80,38 @@ module.exports = function createShopifyAuthRoutes({
         client_secret: secret,
       });
 
-      const remoteResponse = await fetch(`https://${shop}/admin/oauth/access_token`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'Content-Length': Buffer.byteLength(requestBody),
+      const remoteResponse = await fetch(
+        `https://${shop}/admin/oauth/access_token`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Content-Length': Buffer.byteLength(requestBody),
+          },
+          body: requestBody,
         },
-        body: requestBody,
-      });
+      );
 
       const responseBody = await remoteResponse.json();
-
-      console.log("Response Body: " + responseBody);
-      console.log(responseBody);
-
       const accessToken = responseBody.access_token;
 
-      const shopInfo = {
-        code: query.code,
-        hmac: query.hmac,
-        shop: query.shop,
-        timestamp: query.timestamp,
-        accessToken: accessToken
-      };
+      try {
+        await shopStore.storeShop({ accessToken, shop });
 
-      // console.log(query);
-      // console.log(accessToken);
-      // console.log('shop info' + JSON.stringify(shopInfo));
-
-      fetch('https://app.wait.li/shop', { 
-        method: 'POST',
-        mode: 'no-cors',
-        body: JSON.stringify(shopInfo),
-        headers: {"Content-Type": "application/json"}
-      })
-      .then(res => {
-        console.log(res.status);
-        // return res.json();
-        if (res.status == 400) {
-          console.log('Shop is already in the database');
-          storeShopFun('already-complete');
-        } else if (res.status == 200) {
-          console.log('Shop was just installed');
-          storeShopFun('not-complete');
+        if (request.session) {
+          request.session.accessToken = accessToken;
+          request.session.shop = shop;
+        } else {
+          console.warn(
+            'Session not present on request, please install a session middleware.',
+          );
         }
-      });
 
-      function storeShopFun(status) {
-        console.log(status);
-        shopStore.storeShop({ accessToken, shop, status }, (err, token) => {
-          if (err) {
-            console.error('🔴 Error storing shop access token', err);
-          }
-  
-          if (request.session) {
-            request.session.accessToken = accessToken;
-            request.session.shop = shop;
-            request.session.status = status;
-            console.log(accessToken + ' ' + shop + ' ' + status);
-          } else {
-            console.warn('Session not present on request, please install a session middleware.');
-          }
-          afterAuth(request, response);
-        });
+        afterAuth(request, response);
+      } catch (error) {
+        console.error('🔴 Error storing shop access token', error);
+        next(error);
       }
-      
-    }
+    },
   };
 };
