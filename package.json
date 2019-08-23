@@ -1,0 +1,86 @@
+{
+  "_from": "github:patrickbolle/shopify-express",
+  "_id": "@shopify/shopify-express@1.0.0-alpha.8",
+  "_inBundle": false,
+  "_integrity": "",
+  "_location": "/@shopify/shopify-express",
+  "_phantomChildren": {
+    "encoding": "0.1.12",
+    "is-stream": "1.1.0"
+  },
+  "_requested": {
+    "type": "git",
+    "raw": "patrickbolle/shopify-express",
+    "rawSpec": "patrickbolle/shopify-express",
+    "saveSpec": "github:patrickbolle/shopify-express",
+    "fetchSpec": null,
+    "gitCommittish": null
+  },
+  "_requiredBy": [
+    "#USER",
+    "/"
+  ],
+  "_resolved": "github:patrickbolle/shopify-express#7bec0093420b6b9056fd94ddce8183e6d5b15c31",
+  "_spec": "patrickbolle/shopify-express",
+  "_where": "/home/patrick/Projects/wait-li/wait_li_app",
+  "author": {
+    "name": "Shopify Inc."
+  },
+  "bugs": {
+    "url": "https://github.com/Shopify/shopify-express/issues"
+  },
+  "bundleDependencies": false,
+  "dependencies": {
+    "body-parser": "^1.18.2",
+    "connect-redis": "^3.3.0",
+    "cookie-parser": "^1.4.3",
+    "express": "^4.16.2",
+    "express-session": "^1.15.3",
+    "knex": "^0.13.0",
+    "node-fetch": "^1.7.3",
+    "prop-types": "^15.6.1",
+    "raw-body": "^2.3.2",
+    "url": "^0.11.0"
+  },
+  "deprecated": false,
+  "description": "Get up and running quickly with Express.js and the Shopify API.",
+  "devDependencies": {
+    "find-free-port": "^1.1.0",
+    "husky": "^0.14.3",
+    "jest": "^21.2.1",
+    "lint-staged": "^5.0.0",
+    "prettier": "^1.8.2",
+    "prettier-check": "^2.0.0"
+  },
+  "engines": {
+    "node": ">=8.1.0"
+  },
+  "homepage": "https://github.com/Shopify/shopify-express#readme",
+  "keywords": [
+    "shopify",
+    "express.js",
+    "express middleware"
+  ],
+  "license": "MIT",
+  "lint-staged": {
+    "*.{js}": [
+      "prettier:check"
+    ]
+  },
+  "name": "@shopify/shopify-express",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Shopify/shopify-express.git"
+  },
+  "scripts": {
+    "precommit": "lint-staged",
+    "prettier:check": "prettier-check --single-quote --trailing-comma=all {middleware,routes,shopStore}{/*,/**/*}.{js}",
+    "prettier:fix": "prettier --single-quote --trailing-comma=all --write {middleware,routes,shopStore}{/*,/**/*}.{js}",
+    "test": "jest",
+    "test:ci": "jest --ci"
+  },
+  "version": "1.0.0-alpha.8"
+}
