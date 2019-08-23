@@ -60,7 +60,10 @@ module.exports = function createShopifyAuthRoutes({
     async callback(request, response, next) {
       const { query } = request;
       const { code, hmac, shop, referrer } = query;
-      console.log("Referrer is: " + referrer);
+
+      if (referrer) {
+        console.log("Referrer is: " + referrer);
+      }
 
       const map = JSON.parse(JSON.stringify(query));
       delete map['signature'];
