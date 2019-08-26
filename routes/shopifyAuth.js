@@ -61,9 +61,7 @@ module.exports = function createShopifyAuthRoutes({
       const { query } = request;
       const { code, hmac, shop, referrer } = query;
 
-      if (referrer) {
-        console.log("Referrer is: " + referrer);
-      }
+      console.log("Referrer is: " + referrer);
 
       const map = JSON.parse(JSON.stringify(query));
       delete map['signature'];
